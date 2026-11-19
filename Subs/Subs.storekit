@@ -1,0 +1,37 @@
+{
+  "identifier" : "5B2C0C01",
+  "nonRenewingSubscriptions" : [],
+  "products" : [
+    {
+      "displayPrice" : "4.99",
+      "familyShareable" : true,
+      "internalID" : "5B2C0C02",
+      "localizations" : [
+        {
+          "description" : "Abonnements illimités, achat unique à vie",
+          "displayName" : "Subs illimité",
+          "locale" : "fr_FR"
+        },
+        {
+          "description" : "Unlimited subscriptions, one-time purchase",
+          "displayName" : "Subs Unlimited",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "com.enzobataille.subs.unlimited",
+      "referenceName" : "Subs Illimité",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "fr_FR",
+    "_storefront" : "FRA",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
