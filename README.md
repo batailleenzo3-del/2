@@ -1,6 +1,6 @@
 # Subs 💳
 
-App iPhone et iPad (SwiftUI) pour suivre ses abonnements : le vrai total par mois et par an, un rappel avant chaque prélèvement, une alerte avant la fin des essais gratuits, un calendrier, des stats, et l'argent économisé en résiliant. Pas de compte, pas d'accès bancaire, achat unique.
+App iPhone et iPad (SwiftUI) pour suivre ses abonnements : le vrai total par mois et par an, un rappel avant chaque prélèvement, une alerte avant la fin des essais gratuits, un calendrier, des stats, l'argent économisé en résiliant — et, nouveau en 1.1, les **échéances** (passeport, contrôle technique, garanties, cartes cadeaux…) avec rappels avant expiration. Pas de compte, pas d'accès bancaire, achat unique.
 
 **Une app d'abonnements… sans abonnement.** Même design, même achat intégré et même charte que Swipe Photos : *que du vrai, paiement unique, pas de blabla.*
 

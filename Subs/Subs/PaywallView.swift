@@ -37,6 +37,7 @@ struct PaywallView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
                             feature("infinity", loc("paywall_feature_unlimited"))
+                            feature("hourglass", loc("paywall_feature_deadlines"))
                             feature("checkmark.seal.fill", loc("paywall_feature_once"))
                             feature("sparkles", loc("paywall_feature_updates"))
                             feature("heart.fill", loc("paywall_feature_support"))

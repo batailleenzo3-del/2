@@ -67,7 +67,7 @@ struct SettingsView: View {
                     ShareLink(item: store.exportCSV()) {
                         Label(loc("settings_export"), systemImage: "square.and.arrow.up")
                     }
-                    .disabled(store.subscriptions.isEmpty)
+                    .disabled(store.subscriptions.isEmpty && store.deadlines.isEmpty)
                 } header: {
                     Text(loc("settings_data"))
                 } footer: {
@@ -327,7 +327,8 @@ struct SettingsView: View {
             LabeledContent("Abonnements actifs", value: "\(store.active.count) / \(AppConfig.freeSubscriptionLimit) gratuits")
             LabeledContent("Version illimitée", value: purchases.isPro ? "Achetée" : "Non")
             LabeledContent("Produit StoreKit", value: purchases.product?.displayPrice ?? "non chargé")
-            Button("Ajouter 8 abonnements d'exemple") {
+            LabeledContent("Échéances suivies", value: "\(store.activeDeadlines.count) / \(AppConfig.freeDeadlineLimit) gratuites")
+            Button("Ajouter 8 abonnements + 5 échéances d'exemple") {
                 store.debugAddSamples()
             }
             Button("Notification de test dans 5 secondes") {

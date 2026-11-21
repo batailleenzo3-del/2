@@ -17,22 +17,25 @@ struct CalendarScreen: View {
 
     var body: some View {
         NavigationStack {
-            content(payments: store.payments(inMonthOf: month))
+            content(payments: store.payments(inMonthOf: month), deadlines: store.deadlines(inMonthOf: month))
                 .background { AppBackground() }
                 .navigationTitle(loc("tab_calendar"))
                 .navigationDestination(for: UUID.self) { id in
                     SubscriptionDetailView(store: store, subscriptionID: id)
                 }
+                .navigationDestination(for: DeadlineRef.self) { ref in
+                    DeadlineDetailView(store: store, deadlineID: ref.id)
+                }
         }
     }
 
-    private func content(payments: [Date: [Subscription]]) -> some View {
+    private func content(payments: [Date: [Subscription]], deadlines: [Date: [Deadline]]) -> some View {
         let monthTotal = payments.values.joined().reduce(0) { $0 + $1.share }
         return ScrollView {
             VStack(spacing: 16) {
                 monthHeader(total: monthTotal)
-                grid(payments: payments)
-                dayList(payments: payments)
+                grid(payments: payments, deadlines: deadlines)
+                dayList(payments: payments, deadlines: deadlines)
             }
             .padding(16)
             .padding(.bottom, 20)
@@ -100,7 +103,7 @@ struct CalendarScreen: View {
         return days
     }
 
-    private func grid(payments: [Date: [Subscription]]) -> some View {
+    private func grid(payments: [Date: [Subscription]], deadlines: [Date: [Deadline]]) -> some View {
         let columns = Array(repeating: GridItem(.flexible(), spacing: 4), count: 7)
         return LazyVGrid(columns: columns, spacing: 6) {
             ForEach(Array(weekdaySymbols.enumerated()), id: \.offset) { _, symbol in
@@ -111,7 +114,7 @@ struct CalendarScreen: View {
             }
             ForEach(Array(monthDays.enumerated()), id: \.offset) { _, day in
                 if let day {
-                    dayCell(day, subs: payments[day] ?? [])
+                    dayCell(day, subs: payments[day] ?? [], deadlines: deadlines[day] ?? [])
                 } else {
                     Color.clear.frame(height: 50)
                 }
@@ -121,7 +124,7 @@ struct CalendarScreen: View {
         .glassBackground(in: RoundedRectangle(cornerRadius: 26, style: .continuous))
     }
 
-    private func dayCell(_ day: Date, subs: [Subscription]) -> some View {
+    private func dayCell(_ day: Date, subs: [Subscription], deadlines: [Deadline]) -> some View {
         let isToday = calendar.isDateInToday(day)
         let isSelected = selectedDay.map { calendar.isDate($0, inSameDayAs: day) } ?? false
         return Button {
@@ -130,14 +133,22 @@ struct CalendarScreen: View {
         } label: {
             VStack(spacing: 4) {
                 Text("\(calendar.component(.day, from: day))")
-                    .font(.subheadline.weight(isToday || !subs.isEmpty ? .bold : .regular))
+                    .font(.subheadline.weight(isToday || !subs.isEmpty || !deadlines.isEmpty ? .bold : .regular))
                     .foregroundStyle(isSelected ? AnyShapeStyle(.white) : (isToday ? AnyShapeStyle(theme.primary) : AnyShapeStyle(.primary)))
                 HStack(spacing: 2) {
-                    ForEach(subs.prefix(3)) { sub in
+                    ForEach(subs.prefix(deadlines.isEmpty ? 3 : 2)) { sub in
                         Circle()
                             .fill(sub.color)
                             .frame(width: 6, height: 6)
                             .overlay(Circle().strokeBorder(.white.opacity(isSelected ? 0.9 : 0), lineWidth: 1))
+                    }
+                    if let first = deadlines.first {
+                        // Échéance : petit losange
+                        Rectangle()
+                            .fill(first.color)
+                            .frame(width: 5.5, height: 5.5)
+                            .rotationEffect(.degrees(45))
+                            .overlay(Rectangle().strokeBorder(.white.opacity(isSelected ? 0.9 : 0), lineWidth: 1).rotationEffect(.degrees(45)))
                     }
                 }
                 .frame(height: 6)
@@ -154,19 +165,26 @@ struct CalendarScreen: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("\(L10n.longDate(day)), \(subs.count)")
+        .accessibilityLabel("\(L10n.longDate(day)), \(subs.count + deadlines.count)")
     }
 
     // MARK: Liste du jour / du mois
 
     @ViewBuilder
-    private func dayList(payments: [Date: [Subscription]]) -> some View {
+    private func dayList(payments: [Date: [Subscription]], deadlines: [Date: [Deadline]]) -> some View {
         if let selectedDay, calendar.isDate(selectedDay, equalTo: month, toGranularity: .month) {
             let subs = payments[calendar.startOfDay(for: selectedDay)] ?? []
+            let dayDeadlines = deadlines[calendar.startOfDay(for: selectedDay)] ?? []
             VStack(alignment: .leading, spacing: 10) {
                 SectionTitle(title: L10n.longDate(selectedDay),
                              trailing: subs.isEmpty ? nil : L10n.money(subs.reduce(0) { $0 + $1.share }))
-                if subs.isEmpty {
+                ForEach(dayDeadlines) { item in
+                    NavigationLink(value: DeadlineRef(id: item.id)) {
+                        DeadlineRow(deadline: item)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if subs.isEmpty && dayDeadlines.isEmpty {
                     Text(loc("calendar_no_payment"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -182,9 +200,22 @@ struct CalendarScreen: View {
             }
         } else {
             let days = payments.keys.sorted()
+            let monthDeadlines = deadlines.values.joined().sorted { $0.date < $1.date }
             VStack(alignment: .leading, spacing: 10) {
                 SectionTitle(title: loc("calendar_this_month"))
-                if days.isEmpty {
+                ForEach(monthDeadlines) { item in
+                    NavigationLink(value: DeadlineRef(id: item.id)) {
+                        HStack(spacing: 12) {
+                            Text(L10n.shortDate(item.date))
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 52, alignment: .leading)
+                            DeadlineRow(deadline: item)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                if days.isEmpty && monthDeadlines.isEmpty {
                     Text(loc("calendar_no_payment_month"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

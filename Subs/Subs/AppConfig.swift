@@ -36,6 +36,10 @@ nonisolated enum AppConfig {
     /// statistiques, essais gratuits) est gratuit et sans limite.
     static let freeSubscriptionLimit = 5
 
+    /// Nombre d'échéances (papiers, garanties…) suivies gratuitement.
+    /// Le même achat unique les rend illimitées.
+    static let freeDeadlineLimit = 3
+
     // MARK: Rappels
 
     /// Heure par défaut des notifications (modifiable dans les Réglages).

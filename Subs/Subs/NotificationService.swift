@@ -18,9 +18,9 @@ nonisolated enum NotificationService {
         (try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge])) ?? false
     }
 
-    /// Reprogramme tous les rappels. iOS limite à 64 notifications en attente par app :
-    /// on garde les plus proches (les suivantes sont programmées à la prochaine ouverture).
-    static func reschedule(_ subscriptions: [Subscription]) {
+    /// Reprogramme tous les rappels (abonnements et échéances). iOS limite à 64 notifications
+    /// en attente par app : on garde les plus proches (les suivantes sont programmées à la prochaine ouverture).
+    static func reschedule(_ subscriptions: [Subscription], deadlines: [Deadline] = []) {
         let center = UNUserNotificationCenter.current()
         center.removeAllPendingNotificationRequests()
 
@@ -30,24 +30,48 @@ nonisolated enum NotificationService {
         let minute = defaults.object(forKey: SettingsKey.reminderMinute) as? Int ?? 0
         let now = Date.now
 
-        var items: [(fire: Date, sub: Subscription, payment: Date)] = []
+        var items: [(fire: Date, id: String, content: UNMutableNotificationContent)] = []
         for sub in subscriptions where sub.isActive && sub.reminderDays >= 0 {
             for payment in sub.upcomingPayments(4, from: now) {
                 guard let day = calendar.date(byAdding: .day, value: -sub.reminderDays, to: payment),
                       let fire = calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day),
                       fire > now else { continue }
-                items.append((fire: fire, sub: sub, payment: payment))
+                items.append((fire: fire,
+                              id: "\(sub.id.uuidString)-\(Int(payment.timeIntervalSince1970))",
+                              content: makeContent(sub, payment: payment, daysBefore: sub.reminderDays)))
+            }
+        }
+        for item in deadlines where item.isActive {
+            for days in Set(item.reminders) {
+                guard let day = calendar.date(byAdding: .day, value: -days, to: item.date),
+                      let fire = calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day),
+                      fire > now else { continue }
+                items.append((fire: fire, id: "dl-\(item.id.uuidString)-\(days)",
+                              content: makeDeadlineContent(item, daysBefore: days)))
             }
         }
         items.sort { $0.fire < $1.fire }
 
         for item in items.prefix(AppConfig.maxScheduledNotifications) {
-            let content = makeContent(item.sub, payment: item.payment, daysBefore: item.sub.reminderDays)
             let components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: item.fire)
             let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
-            let identifier = "\(item.sub.id.uuidString)-\(Int(item.payment.timeIntervalSince1970))"
-            center.add(UNNotificationRequest(identifier: identifier, content: content, trigger: trigger))
+            center.add(UNNotificationRequest(identifier: item.id, content: item.content, trigger: trigger))
         }
+    }
+
+    /// « Passeport expire dans 30 jours » — « Le jeudi 12 mars 2027. Pense à t'en occuper à temps. »
+    static func makeDeadlineContent(_ item: Deadline, daysBefore: Int) -> UNMutableNotificationContent {
+        let content = UNMutableNotificationContent()
+        let when: String
+        switch daysBefore {
+        case ...0: when = L10n.t("notif_when_today")
+        case 1: when = L10n.t("notif_when_tomorrow")
+        default: when = L10n.t("notif_when_days", daysBefore)
+        }
+        content.title = L10n.t("notif_dl_title", item.name, when)
+        content.body = L10n.t("notif_dl_body", L10n.longDate(item.date))
+        content.sound = .default
+        return content
     }
 
     static func makeContent(_ sub: Subscription, payment: Date, daysBefore: Int) -> UNMutableNotificationContent {

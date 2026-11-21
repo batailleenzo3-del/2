@@ -1,4 +1,6 @@
-# 💳 Subs — le guide complet (version 1.0)
+# 💳 Subs — le guide complet (version 1.1)
+
+> **Nouveau en 1.1 : les échéances.** Passeport, carte d'identité, contrôle technique, garanties, cartes cadeaux, ordonnances, entretien de la chaudière… Tout ce qui expire un jour, avec plusieurs rappels possibles (6 mois, 3 mois, 1 mois, la veille…). Nouvel onglet **Échéances**, et elles apparaissent aussi dans le **Calendrier** (petit losange) et sur l'accueil quand elles approchent.
 
 Ce dossier contient **tout** : le projet Xcode prêt à ouvrir, l'icône, l'achat intégré (même code que Swipe Photos), les textes App Store en 5 langues, un studio de captures d'écran et la politique de confidentialité.
 Lis ce guide dans l'ordre. Chaque étape est expliquée clic par clic.
@@ -29,7 +31,8 @@ Lis ce guide dans l'ordre. Chaque étape est expliquée clic par clic.
 | **Abonnements** | Le **vrai total** (par mois ou par an, touche Mois/An), le coût par jour, les **essais gratuits qui se terminent** (carte orange), les **prochains prélèvements** des 30 jours, la liste triable (prochain, prix, nom), les abonnements **résiliés** et l'argent **économisé** |
 | **+** (en bas à droite) | **41 services et factures pré-remplis** (Netflix, Spotify, iCloud+, salle de sport, forfait mobile, électricité, assurances…) ou un abonnement personnalisé. **Aucun prix inventé** : l'utilisateur saisit son vrai prix |
 | **Fiche d'un abonnement** | Prix, part réelle si partagé, prochain prélèvement, coût par mois / an / 5 ans, les 6 prochains prélèvements, bouton **Gérer / résilier** (App Store ou site du service), bouton **J'ai résilié** (confettis + économies) |
-| **Calendrier** | Le mois avec un point de couleur sur chaque jour de prélèvement, total du mois, détail du jour |
+| **Échéances** *(1.1)* | Papiers, véhicule, maison, santé, garanties, cartes & bons d'achat, contrats, animaux : **26 modèles** + personnalisé. Pour chacune : date d'expiration, **plusieurs rappels** (jour J → 90 jours avant), renouvellement régulier facultatif (tous les ans, 2 ans…), notes. Boutons **C'est renouvelé** (nouvelle date, les rappels repartent) et **Plus besoin de suivre**. Couleur d'état : rouge (expiré / < 7 j), orange (< 30 j), vert. **Aucune durée de validité inventée** : elles changent selon les pays |
+| **Calendrier** | Le mois avec un point de couleur sur chaque jour de prélèvement (et un losange pour les échéances), total du mois, détail du jour |
 | **Stats** | Où part l'argent (graphique par catégorie), les 12 prochains mois, les 5 plus chers, les économies grâce aux résiliations |
 | **⚙︎ Réglages** | Version illimitée, **heure des rappels**, rappel par défaut, **devise** (20 devises), 8 couleurs + transparence du verre, thème, vibrations, **export CSV**, tutoriel, noter l'app |
 | **💡** | Idées & bugs (même écran que Swipe Photos), envoi par Mail |
@@ -44,6 +47,7 @@ Lis ce guide dans l'ordre. Chaque étape est expliquée clic par clic.
 - **5 abonnements actifs gratuits**, sans limite de temps. Rappels, calendrier, stats, essais gratuits : **tout est gratuit**.
 - Au 6ᵉ, l'écran de paiement s'ouvre : **achat unique à vie (4,99 €)**, Restaurer mes achats, partage familial.
 - Les abonnements résiliés ne comptent pas dans la limite (l'historique des économies reste gratuit).
+- **3 échéances suivies gratuites** ; le **même achat unique** les rend illimitées (rien à créer de plus dans App Store Connect).
 
 ### Ce qui n'est pas inclus (et pourquoi)
 - **Widget** et **synchronisation iCloud entre appareils** : ils nécessitent des fonctions (App Groups, CloudKit) qui **ne fonctionnent pas avec un Apple ID gratuit**. Ce seront de très bonnes mises à jour 1.1 une fois ton compte développeur payant actif. Les données sont déjà incluses dans la sauvegarde iCloud de l'iPhone.
@@ -89,13 +93,15 @@ Subs/
 ├── Subs/                           ← le code de l'app
 │   ├── AppConfig.swift             ← ⚠️ À PERSONNALISER avant publication (e-mail, liens…)
 │   ├── SubsApp.swift               ← point de départ
-│   ├── ContentView.swift           ← tutoriel → 3 onglets
+│   ├── ContentView.swift           ← tutoriel → 4 onglets
 │   ├── HomeView.swift              ← onglet Abonnements (total, à venir, liste)
 │   ├── CalendarScreen.swift        ← onglet Calendrier
 │   ├── StatsScreen.swift           ← onglet Stats (graphiques)
 │   ├── AddSubscriptionView.swift   ← choix d'un service
 │   ├── SubscriptionEditor.swift    ← formulaire ajout / modification
 │   ├── SubscriptionDetailView.swift← fiche d'un abonnement, résiliation
+│   ├── Deadlines.swift             ← (1.1) les échéances : types, rappels, 26 modèles
+│   ├── DeadlinesScreen.swift       ← (1.1) onglet Échéances, ajout, fiche, formulaire
 │   ├── SettingsView.swift          ← réglages
 │   ├── PaywallView.swift           ← écran de paiement (comme Swipe Photos)
 │   ├── PurchaseManager.swift       ← achat intégré (StoreKit 2, même code que Swipe Photos)
@@ -137,7 +143,7 @@ Subs/
 Comme pour Swipe Photos, le projet est en **mode démo** : lancé avec ▶︎ depuis Xcode, l'achat utilise `Subs.storekit` (produit à **4,99 €**) avec la **vraie fenêtre de paiement Apple** (mention « Environment: Xcode »), sans aucun paiement réel.
 
 ### Remplir l'app en 2 secondes
-⚙︎ **Réglages** → tout en bas, **🧪 Mode test** → **Ajouter 8 abonnements d'exemple** (dont un essai gratuit qui finit dans 4 jours, un abonnement partagé à 3 et un abonnement résilié). Parfait pour tester et faire les captures. **Tout effacer** pour repartir de zéro.
+⚙︎ **Réglages** → tout en bas, **🧪 Mode test** → **Ajouter 8 abonnements + 5 échéances d'exemple** (dont un essai gratuit qui finit dans 4 jours, un abonnement partagé à 3, un abonnement résilié, un contrôle technique dans 12 jours et une carte cadeau expirée). Parfait pour tester et faire les captures. **Tout effacer** pour repartir de zéro.
 
 ### Tester le paiement
 1. Avec les exemples, tu as déjà 7 abonnements actifs (plus que les 5 gratuits) : touche **+** → l'écran de paiement s'ouvre.
@@ -209,3 +215,13 @@ Refus possibles et réponses :
 | Mauvaise devise | ⚙︎ → Devise (ça change l'affichage, pas les montants) |
 | « Prix indisponible · Réessayer » | Lance avec ▶︎ depuis Xcode (partie 5) |
 | L'app ne s'ouvre plus après 7 jours | Compte gratuit : rebranche l'iPhone et clique sur ▶︎. **Tes abonnements sont conservés.** |
+
+---
+
+## 8. Mettre à jour l'app déjà publiée (version 1.1)
+
+1. Le numéro de version est déjà passé à **1.1** (build 2) dans le projet.
+2. App Store Connect → ton app → **+ Version ou plateforme** → iOS → `1.1`.
+3. **Nouveautés de cette version** : copie-colle les textes de `AppStore/Fiche-App-Store.md` (section « Nouveautés de la version 1.1 »), et remplace la description par la nouvelle (ligne **NOUVEAU – ÉCHÉANCES** ajoutée).
+4. Xcode : **Product → Archive** → **Distribute App**, choisis le build dans la version 1.1, **Soumettre**.
+5. Les données des utilisateurs sont conservées : les échéances sont enregistrées dans un fichier à part (`deadlines.json`).

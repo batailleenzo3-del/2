@@ -35,6 +35,7 @@ struct HomeView: View {
                             notificationsBanner
                         }
                         trialSection
+                        deadlineSection
                         upcomingSection
                         listSection
                         cancelledSection
@@ -68,6 +69,9 @@ struct HomeView: View {
             }
             .navigationDestination(for: UUID.self) { id in
                 SubscriptionDetailView(store: store, subscriptionID: id)
+            }
+            .navigationDestination(for: DeadlineRef.self) { ref in
+                DeadlineDetailView(store: store, deadlineID: ref.id)
             }
         }
         .sheet(isPresented: $showAdd) {
@@ -203,6 +207,44 @@ struct HomeView: View {
                         .foregroundStyle(.primary)
                         .padding(14)
                         .glassBackground(in: RoundedRectangle(cornerRadius: 22, style: .continuous), tint: .orange.opacity(0.12))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    // MARK: Échéances proches (papiers, garanties…)
+
+    @ViewBuilder
+    private var deadlineSection: some View {
+        let items = store.deadlinesSoon(days: 14)
+        if !items.isEmpty {
+            VStack(spacing: 10) {
+                ForEach(items.prefix(3)) { item in
+                    NavigationLink(value: DeadlineRef(id: item.id)) {
+                        HStack(spacing: 14) {
+                            Image(systemName: item.kind.icon)
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(item.statusColor)
+                                .frame(width: 46, height: 46)
+                                .glassBackground(in: Circle(), tint: item.statusColor.opacity(0.22))
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(item.name)
+                                    .font(.headline)
+                                    .lineLimit(1)
+                                Text(item.statusText)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.bold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .foregroundStyle(.primary)
+                        .padding(14)
+                        .glassBackground(in: RoundedRectangle(cornerRadius: 22, style: .continuous), tint: item.statusColor.opacity(0.10))
                     }
                     .buttonStyle(.plain)
                 }

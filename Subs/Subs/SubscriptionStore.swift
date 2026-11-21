@@ -13,15 +13,18 @@ import UserNotifications
 @MainActor
 final class SubscriptionStore: ObservableObject {
     @Published private(set) var subscriptions: [Subscription] = []
+    @Published private(set) var deadlines: [Deadline] = []
     @Published private(set) var notificationStatus: UNAuthorizationStatus = .notDetermined
 
     private let fileURL: URL
+    private let deadlinesURL: URL
 
     init() {
         let base = (try? FileManager.default.url(for: .applicationSupportDirectory, in: .userDomainMask,
                                                  appropriateFor: nil, create: true))
             ?? FileManager.default.temporaryDirectory
         fileURL = base.appendingPathComponent("subscriptions.json")
+        deadlinesURL = base.appendingPathComponent("deadlines.json")
         load()
     }
 
@@ -63,6 +66,84 @@ final class SubscriptionStore: ObservableObject {
         active
             .filter { $0.isInTrial() && L10n.daysUntil($0.anchorDate) <= days }
             .sorted { $0.anchorDate < $1.anchorDate }
+    }
+
+    // MARK: Échéances
+
+    /// Échéances suivies, de la plus proche à la plus lointaine.
+    var activeDeadlines: [Deadline] {
+        deadlines.filter(\.isActive).sorted { $0.date < $1.date }
+    }
+
+    var doneDeadlines: [Deadline] {
+        deadlines.filter { !$0.isActive }
+            .sorted { ($0.doneDate ?? .distantPast) > ($1.doneDate ?? .distantPast) }
+    }
+
+    func deadline(_ id: UUID) -> Deadline? {
+        deadlines.first { $0.id == id }
+    }
+
+    /// Échéances expirées ou qui arrivent dans les `days` prochains jours.
+    func deadlinesSoon(days: Int = 30) -> [Deadline] {
+        activeDeadlines.filter { $0.daysLeft <= days }
+    }
+
+    /// Échéances d'un mois, regroupées par jour (calendrier).
+    func deadlines(inMonthOf month: Date) -> [Date: [Deadline]] {
+        let calendar = Calendar.current
+        var result: [Date: [Deadline]] = [:]
+        for item in deadlines where item.isActive && calendar.isDate(item.date, equalTo: month, toGranularity: .month) {
+            result[calendar.startOfDay(for: item.date), default: []].append(item)
+        }
+        return result
+    }
+
+    func canAddDeadline(isPro: Bool) -> Bool {
+        isPro || activeDeadlines.count < AppConfig.freeDeadlineLimit
+    }
+
+    func addDeadline(_ item: Deadline) {
+        deadlines.append(item)
+        saveDeadlines()
+        if !item.reminders.isEmpty && notificationStatus == .notDetermined {
+            Task {
+                _ = await NotificationService.requestAuthorization()
+                await refreshNotificationStatus()
+                rescheduleNotifications()
+            }
+        }
+    }
+
+    func updateDeadline(_ item: Deadline) {
+        guard let index = deadlines.firstIndex(where: { $0.id == item.id }) else { return }
+        deadlines[index] = item
+        saveDeadlines()
+    }
+
+    func deleteDeadline(_ id: UUID) {
+        deadlines.removeAll { $0.id == id }
+        saveDeadlines()
+    }
+
+    /// Papier renouvelé, entretien fait… : la date avance, les rappels repartent.
+    func renewDeadline(_ id: UUID, to date: Date) {
+        guard let index = deadlines.firstIndex(where: { $0.id == id }) else { return }
+        deadlines[index].date = Calendar.current.startOfDay(for: date)
+        deadlines[index].doneDate = nil
+        saveDeadlines()
+    }
+
+    func markDeadlineDone(_ id: UUID) {
+        guard let index = deadlines.firstIndex(where: { $0.id == id }) else { return }
+        deadlines[index].doneDate = .now
+        saveDeadlines()
+    }
+
+    func reactivateDeadline(_ id: UUID) {
+        guard let index = deadlines.firstIndex(where: { $0.id == id }) else { return }
+        deadlines[index].doneDate = nil
+        saveDeadlines()
     }
 
     // MARK: Totaux
@@ -185,21 +266,43 @@ final class SubscriptionStore: ObservableObject {
         rescheduleNotifications()
     }
 
-    var hasReminders: Bool { active.contains { $0.reminderDays >= 0 } }
+    var hasReminders: Bool {
+        active.contains { $0.reminderDays >= 0 } || activeDeadlines.contains { !$0.reminders.isEmpty }
+    }
 
     func rescheduleNotifications() {
-        NotificationService.reschedule(subscriptions)
+        NotificationService.reschedule(subscriptions, deadlines: deadlines)
     }
 
     // MARK: Sauvegarde
 
     private func load() {
+        loadDeadlines()
         guard let data = try? Data(contentsOf: fileURL) else { return }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         if let list = try? decoder.decode([Subscription].self, from: data) {
             subscriptions = list
         }
+    }
+
+    private func loadDeadlines() {
+        guard let data = try? Data(contentsOf: deadlinesURL) else { return }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        if let list = try? decoder.decode([Deadline].self, from: data) {
+            deadlines = list
+        }
+    }
+
+    private func saveDeadlines() {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        if let data = try? encoder.encode(deadlines) {
+            try? data.write(to: deadlinesURL, options: [.atomic])
+        }
+        rescheduleNotifications()
     }
 
     private func save() {
@@ -242,6 +345,19 @@ final class SubscriptionStore: ObservableObject {
                 field(sub.notes)
             ].joined(separator: ";"))
         }
+        if !deadlines.isEmpty {
+            lines.append("")
+            lines.append("deadline;date;category;status;notes")
+            for item in deadlines.sorted(by: { $0.date < $1.date }) {
+                lines.append([
+                    field(item.name),
+                    dateFormatter.string(from: item.date),
+                    item.kind.rawValue,
+                    item.isActive ? "active" : "done",
+                    field(item.notes)
+                ].joined(separator: ";"))
+            }
+        }
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("Subs.csv")
         try? lines.joined(separator: "\n").write(to: url, atomically: true, encoding: .utf8)
         return url
@@ -274,11 +390,21 @@ final class SubscriptionStore: ObservableObject {
         ]
         subscriptions.append(contentsOf: samples)
         save()
+        deadlines.append(contentsOf: [
+            Deadline(name: L10n.t("dlp_passport"), kind: .identity, date: day(75), reminders: [180, 90, 30]),
+            Deadline(name: L10n.t("dlp_inspection"), kind: .vehicle, date: day(12), reminders: [30, 7]),
+            Deadline(name: L10n.t("dlp_gift_card"), kind: .voucher, date: day(-3), reminders: [30, 7]),
+            Deadline(name: L10n.t("dlp_boiler"), kind: .home, date: day(160), reminders: [30], renewMonths: 12),
+            Deadline(name: L10n.t("dlp_warranty"), kind: .warranty, date: day(400), reminders: [30])
+        ])
+        saveDeadlines()
     }
 
     func debugRemoveAll() {
         subscriptions.removeAll()
         save()
+        deadlines.removeAll()
+        saveDeadlines()
     }
     #endif
 }

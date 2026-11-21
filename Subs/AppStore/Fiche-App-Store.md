@@ -37,6 +37,7 @@ Streaming, musique, sport, box internet, forfait, assurances, logiciels… Combi
 • ABONNEMENTS PARTAGÉS : famille, coloc… les totaux ne comptent que ta part
 • RÉSILIER : un bouton t'emmène directement au bon endroit (App Store ou site du service)
 • ÉCONOMIES : marque un abonnement comme résilié, Subs compte l'argent que tu ne dépenses plus
+• NOUVEAU – ÉCHÉANCES : passeport, contrôle technique, garanties, cartes cadeaux, ordonnances… Subs te prévient avant que ça expire
 • 41 services et factures pré-remplis, ou crée le tien en 10 secondes
 • Toutes les fréquences : semaine, mois, trimestre, semestre, année
 • Export CSV (Excel, Numbers)
@@ -83,6 +84,7 @@ Streaming, music, gym, internet, phone plan, insurance, software… How much doe
 • SHARED PLANS: family, roommates… totals only count your share
 • CANCEL: one button takes you straight to the right place (App Store or the service's website)
 • SAVINGS: mark a subscription as cancelled, Subs counts the money you no longer spend
+• NEW – EXPIRY DATES: passport, car inspection, warranties, gift cards, prescriptions… Subs warns you before they expire
 • 41 pre-filled services and bills, or create your own in 10 seconds
 • Every billing cycle: weekly, monthly, quarterly, every 6 months, yearly
 • CSV export (Excel, Numbers)
@@ -129,6 +131,7 @@ Streaming, música, gimnasio, internet, móvil, seguros, software… ¿Cuánto t
 • PLANES COMPARTIDOS: familia, compañeros de piso… los totales solo cuentan tu parte
 • CANCELAR: un botón te lleva directamente al sitio correcto (App Store o web del servicio)
 • AHORROS: marca una suscripción como cancelada, Subs cuenta el dinero que ya no gastas
+• NUEVO – VENCIMIENTOS: pasaporte, ITV, garantías, tarjetas regalo, recetas… Subs te avisa antes de que caduquen
 • 41 servicios y facturas predefinidos, o crea el tuyo en 10 segundos
 • Todas las frecuencias: semanal, mensual, trimestral, semestral, anual
 • Exportación CSV (Excel, Numbers)
@@ -175,6 +178,7 @@ Streaming, Musik, Fitnessstudio, Internet, Handyvertrag, Versicherungen, Softwar
 • GETEILTE ABOS: Familie, WG… in den Summen zählt nur dein Anteil
 • KÜNDIGEN: Ein Knopf bringt dich direkt an die richtige Stelle (App Store oder Website des Anbieters)
 • ERSPARNIS: Markiere ein Abo als gekündigt, Subs zählt das Geld, das du nicht mehr ausgibst
+• NEU – FRISTEN: Reisepass, TÜV, Garantien, Gutscheine, Rezepte… Subs erinnert dich, bevor etwas abläuft
 • 41 vorausgefüllte Dienste und Rechnungen, oder eigenes Abo in 10 Sekunden
 • Jede Abrechnung: wöchentlich, monatlich, vierteljährlich, halbjährlich, jährlich
 • CSV-Export (Excel, Numbers)
@@ -221,6 +225,7 @@ Streaming, musica, palestra, internet, telefono, assicurazioni, software… Quan
 • ABBONAMENTI CONDIVISI: famiglia, coinquilini… i totali contano solo la tua quota
 • DISDIRE: un pulsante ti porta dritto al posto giusto (App Store o sito del servizio)
 • RISPARMI: segna un abbonamento come disdetto, Subs conta i soldi che non spendi più
+• NOVITÀ – SCADENZE: passaporto, revisione, garanzie, carte regalo, ricette… Subs ti avvisa prima che scadano
 • 41 servizi e bollette già pronti, o crea il tuo in 10 secondi
 • Tutte le frequenze: settimanale, mensile, trimestrale, semestrale, annuale
 • Esportazione CSV (Excel, Numbers)
@@ -238,6 +243,20 @@ Segui 5 abbonamenti gratis, senza limiti di tempo. Per seguirne di più: un acqu
 ```
 abbonamenti,budget,spese,bollette,promemoria,prova gratuita,disdire,soldi,risparmio,addebiti
 ```
+
+---
+
+## Nouveautés de la version 1.1 (« Nouveautés » dans App Store Connect)
+
+🇫🇷 `Nouveau : les échéances. Passeport, carte d'identité, contrôle technique, garanties, cartes cadeaux, ordonnances… Note la date, Subs te prévient avant qu'elle expire (plusieurs rappels possibles). Elles apparaissent aussi dans le calendrier.`
+
+🇬🇧 `New: expiry dates. Passport, ID card, car inspection, warranties, gift cards, prescriptions… Enter the date, Subs warns you before it expires (several reminders possible). They also show up in the calendar.`
+
+🇪🇸 `Nuevo: vencimientos. Pasaporte, DNI, ITV, garantías, tarjetas regalo, recetas… Anota la fecha y Subs te avisa antes de que caduque (varios avisos posibles). También aparecen en el calendario.`
+
+🇩🇪 `Neu: Fristen. Reisepass, Personalausweis, TÜV, Garantien, Gutscheine, Rezepte… Datum eintragen, Subs erinnert dich vor dem Ablauf (mehrere Erinnerungen möglich). Sie erscheinen auch im Kalender.`
+
+🇮🇹 `Novità: scadenze. Passaporto, carta d'identità, revisione, garanzie, carte regalo, ricette… Inserisci la data, Subs ti avvisa prima che scada (più promemoria possibili). Compaiono anche nel calendario.`
 
 ---
 
@@ -266,9 +285,9 @@ Ajoute ensuite l'achat intégré à ta version 1.0 (section **Achats intégrés 
 Subs is a manual subscription tracker. Users enter their subscriptions (name, price, billing cycle, next charge date); everything is stored locally on the device.
 - Tap + (bottom right) to add a subscription: pick a pre-filled service or create a custom one.
 - Local notifications remind the user before each charge and before a free trial ends (time set in Settings). Permission is requested when the first subscription is saved.
-- Tabs: Subscriptions (totals, upcoming charges, list), Calendar (charges per day), Stats (charts by category and month).
+- Tabs: Subscriptions (totals, upcoming charges, list), Expiry dates (documents, warranties, vouchers the user wants to be reminded about), Calendar (charges and expiry dates per day), Stats (charts by category and month).
 - "Manage / cancel" opens the App Store subscriptions page or the URL entered by the user. The app never cancels anything itself and never connects to any bank.
-- The first 5 active subscriptions are free. A non-consumable in-app purchase unlocks unlimited subscriptions forever. "Restore purchases" is available on the paywall and in Settings.
+- The first 5 active subscriptions and 3 expiry dates are free. A non-consumable in-app purchase unlocks unlimited subscriptions and expiry dates forever. "Restore purchases" is available on the paywall and in Settings.
 - Lightbulb icon (top left) = feedback form that opens a pre-filled email.
 - No account, no network calls, no data collection. Service names in the catalog are only used as labels to help users identify their own subscriptions; the app is not affiliated with these companies.
 ```

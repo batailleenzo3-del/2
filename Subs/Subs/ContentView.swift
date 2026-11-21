@@ -1,13 +1,13 @@
 //
 //  ContentView.swift
-//  Écran racine : tutoriel → onglets (Abonnements, Calendrier, Stats).
+//  Écran racine : tutoriel → onglets (Abonnements, Échéances, Calendrier, Stats).
 //
 
 import SwiftUI
 import Combine
 
 enum AppTab: Hashable {
-    case home, calendar, stats
+    case home, deadlines, calendar, stats
 }
 
 struct ContentView: View {
@@ -31,6 +31,9 @@ struct ContentView: View {
                     HomeView(store: store, purchases: purchases)
                         .tabItem { Label(loc("tab_home"), systemImage: "square.stack.fill") }
                         .tag(AppTab.home)
+                    DeadlinesScreen(store: store, purchases: purchases)
+                        .tabItem { Label(loc("tab_deadlines"), systemImage: "hourglass") }
+                        .tag(AppTab.deadlines)
                     CalendarScreen(store: store)
                         .tabItem { Label(loc("tab_calendar"), systemImage: "calendar") }
                         .tag(AppTab.calendar)
